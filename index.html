@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Configurateur FJ40</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fond: #0c0c0d;
+    --panneau: rgba(18, 18, 20, 0.86);
+    --ligne: rgba(255, 255, 255, 0.09);
+    --texte: #f2efe9;
+    --doux: #9a968e;
+    --accent: #c8a46a;
+    --ambiance: radial-gradient(ellipse at 50% 45%, #2a2a2e 0%, #121214 55%, #08080a 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--fond); color: var(--texte); font-family: Manrope, system-ui, sans-serif; overflow: hidden; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  #scene { position: fixed; inset: 0 400px 0 0; background: var(--ambiance); transition: background .8s ease; }
+  #scene canvas { display: block; width: 100%; height: 100%; outline: none; }
+
+  header { position: fixed; top: 0; left: 0; right: 400px; padding: 28px 36px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 2; }
+  header * { pointer-events: auto; }
+  .titre small { display: block; font-size: 11px; letter-spacing: .32em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .haut { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  .haut a { color: var(--doux); text-decoration: none; transition: color .2s; white-space: nowrap; }
+  .haut a:hover { color: var(--texte); }
+  .langues { display: flex; gap: 2px; }
+  .langues button { padding: 4px 7px; border-radius: 6px; color: var(--doux); font-size: 11px; letter-spacing: .14em; }
+  .langues button:hover { color: var(--texte); }
+  .langues button.actif { color: var(--accent); }
+  .titre h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-size: 46px; letter-spacing: .02em; line-height: 1; }
+  .titre h1 em { font-style: italic; color: var(--accent); }
+  .ambiances { display: flex; gap: 4px; background: rgba(0,0,0,.35); border: 1px solid var(--ligne); border-radius: 99px; padding: 4px; backdrop-filter: blur(10px); }
+  .ambiances button { padding: 8px 14px; border-radius: 99px; font-size: 12px; color: var(--doux); transition: .25s; }
+  .ambiances button.actif { background: var(--texte); color: #111; }
+
+  .barre-vues { position: fixed; bottom: 28px; left: calc((100% - 400px) / 2); transform: translateX(-50%); display: flex; gap: 4px; background: rgba(0,0,0,.4); border: 1px solid var(--ligne); border-radius: 99px; padding: 4px; backdrop-filter: blur(10px); z-index: 2; }
+  .barre-vues button { padding: 9px 16px; border-radius: 99px; font-size: 12px; color: var(--doux); transition: .25s; white-space: nowrap; }
+  .barre-vues button:hover { color: var(--texte); }
+  .barre-vues button.actif { color: var(--texte); background: rgba(255,255,255,.1); }
+
+  #chargement { position: fixed; inset: 0 400px 0 0; display: grid; place-items: center; font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--doux); z-index: 3; transition: opacity .6s; }
+  #chargement.cache { opacity: 0; pointer-events: none; }
+  #source { position: fixed; bottom: 84px; left: 36px; font-size: 11px; color: var(--doux); letter-spacing: .08em; z-index: 2; }
+
+  aside { position: fixed; top: 0; right: 0; bottom: 0; width: 400px; background: var(--panneau); border-left: 1px solid var(--ligne); display: flex; flex-direction: column; backdrop-filter: blur(20px); z-index: 4; }
+  .options { flex: 1; overflow-y: auto; padding: 32px 30px 20px; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+  .groupe { padding: 22px 0; border-bottom: 1px solid var(--ligne); }
+  .groupe:first-child { padding-top: 0; }
+  .groupe h2 { font-size: 11px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--doux); margin-bottom: 14px; display: flex; justify-content: space-between; }
+  .groupe h2 span { letter-spacing: .04em; text-transform: none; font-weight: 500; color: var(--texte); }
+
+  .liste { display: flex; flex-direction: column; gap: 6px; }
+  .choix { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 16px; border: 1px solid var(--ligne); border-radius: 12px; font-size: 14px; text-align: left; transition: .2s; }
+  .choix:hover { border-color: rgba(255,255,255,.25); }
+  .choix.actif { border-color: var(--accent); background: rgba(200,164,106,.08); }
+  .choix .prix { font-size: 12px; color: var(--doux); white-space: nowrap; }
+  .choix .case { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(255,255,255,.3); display: grid; place-items: center; flex-shrink: 0; font-size: 11px; }
+  .choix.actif .case { background: var(--accent); border-color: var(--accent); color: #111; }
+  .choix .gauche { display: flex; align-items: center; gap: 12px; }
+
+  .pastilles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pastille { aspect-ratio: 1; border-radius: 50%; position: relative; box-shadow: inset 0 -6px 12px rgba(0,0,0,.35), inset 0 4px 8px rgba(255,255,255,.18); transition: transform .2s; }
+  .pastille:hover { transform: scale(1.06); }
+  .pastille.actif::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid var(--accent); }
+  .pastilles.petites { grid-template-columns: repeat(6, 1fr); }
+
+  .pied { padding: 22px 30px 26px; border-top: 1px solid var(--ligne); background: rgba(10,10,11,.6); }
+  .total { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+  .total small { font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--doux); }
+  .total strong { font-family: "Cormorant Garamond", serif; font-size: 36px; font-weight: 500; }
+  .boutons { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .principal { background: var(--texte); color: #111; padding: 15px; border-radius: 12px; font-weight: 600; font-size: 14px; letter-spacing: .02em; transition: .2s; }
+  .principal:hover { background: var(--accent); }
+  .secondaire { border: 1px solid var(--ligne); padding: 0 16px; border-radius: 12px; font-size: 13px; }
+  .secondaire:hover { border-color: rgba(255,255,255,.3); }
+
+  #fenetre { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); display: none; place-items: center; z-index: 10; padding: 16px; }
+  #fenetre.ouverte { display: grid; }
+  .boite { background: #141416; border: 1px solid var(--ligne); border-radius: 18px; padding: 30px; width: min(460px, 100%); max-height: 90vh; overflow-y: auto; }
+  .boite h3 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-size: 30px; margin-bottom: 6px; }
+  .boite p { color: var(--doux); font-size: 13px; margin-bottom: 18px; }
+  .boite ul { list-style: none; font-size: 13px; margin-bottom: 20px; }
+  .boite li { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--ligne); gap: 12px; }
+  .boite li span:last-child { color: var(--doux); text-align: right; }
+  .boite .boutons { grid-template-columns: 1fr 1fr; }
+  .galerie { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .galerie button { aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; border: 1px solid var(--ligne); }
+  .galerie img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+  .galerie button:hover img { transform: scale(1.06); }
+  #visionneuse { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; place-items: center; z-index: 12; padding: 16px; cursor: zoom-out; }
+  #visionneuse.ouverte { display: grid; }
+  #visionneuse figure { max-width: min(900px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  #visionneuse img { max-width: 100%; max-height: 80vh; border-radius: 12px; }
+  #visionneuse figcaption { color: var(--texte); font-size: 14px; }
+  #toast { position: fixed; bottom: 90px; left: calc((100% - 400px) / 2); transform: translate(-50%, 20px); background: var(--texte); color: #111; padding: 10px 18px; border-radius: 99px; font-size: 13px; opacity: 0; transition: .3s; z-index: 11; pointer-events: none; }
+  #toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 860px) {
+    #scene, #chargement { inset: 0 0 52vh 0; }
+    header { right: 0; padding: 16px; }
+    .titre h1 { font-size: 30px; }
+    .titre small { font-size: 9px; margin-bottom: 4px; }
+    .haut { margin-bottom: 10px; gap: 12px; font-size: 10px; }
+    .ambiances button { padding: 6px 10px; font-size: 11px; }
+    #source { bottom: calc(52vh + 60px); left: 16px; }
+    .barre-vues { left: 50%; bottom: calc(52vh + 12px); }
+    .barre-vues button { padding: 7px 10px; font-size: 11px; }
+    aside { top: auto; height: 52vh; width: 100%; border-left: 0; border-top: 1px solid var(--ligne); }
+    .options { padding: 20px 16px 10px; }
+    .pied { padding: 14px 16px 18px; }
+    .total strong { font-size: 28px; }
+    #toast { left: 50%; bottom: calc(52vh + 70px); }
+  }
+</style>
+</head>
+<body>
+
+<div id="scene"></div>
+<div id="chargement" data-t>Chargement du véhicule…</div>
+
+<header>
+  <div class="titre">
+    <div class="haut">
+      <a id="retour" href="#" hidden data-t>← Accueil</a>
+      <div class="langues" id="langues"></div>
+    </div>
+    <small data-t>Configurateur</small>
+    <h1>Land Cruiser <em>FJ40</em></h1>
+  </div>
+  <div class="ambiances" id="ambiances"></div>
+</header>
+<div id="source"></div>
+
+<div class="barre-vues" id="vues"></div>
+
+<aside>
+  <div class="options" id="options"></div>
+  <div class="pied">
+    <div class="total"><small data-t>Prix total</small><strong id="total">—</strong></div>
+    <div class="boutons">
+      <button class="principal" id="devis" data-t>Demander un devis</button>
+      <button class="secondaire" id="partager" title="Copier le lien de cette configuration" data-t>Partager</button>
+    </div>
+  </div>
+</aside>
+
+<div id="fenetre">
+  <div class="boite">
+    <h3 data-t>Votre FJ40</h3>
+    <p data-t>Récapitulatif de votre configuration.</p>
+    <ul id="recap"></ul>
+    <div class="boutons">
+      <button class="secondaire" id="fermer" style="padding:15px" data-t>Modifier</button>
+      <button class="principal" id="envoyer" data-t>Envoyer la demande</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="visionneuse"><figure><img id="photo-grande" alt=""><figcaption id="photo-legende"></figcaption></figure></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+// ─────────────────────────────────────────────────────────────
+// CATALOGUE DES OPTIONS — prix provisoires, à remplacer par les vrais
+// ─────────────────────────────────────────────────────────────
+const PRIX_DE_BASE = 89000;  // véhicule sans aucune option (décision de Mathis)
+const STYLE_CUIR_PRET = true;
+const CHOIX_UNIQUES = ['moteur', 'carrosserie', 'toit_type', 'toit', 'bache', 'calandre', 'jantes_type', 'jantes', 'pneus', 'pare_chocs', 'sieges', 'cuir', 'cuir_cotes', 'fil', 'cuir_style'];
+const actifs = () => CHOIX_UNIQUES.filter(cle => (!CATALOGUE[cle].si || CATALOGUE[cle].si(etat)) && CATALOGUE[cle].choix.some(c => c.id === etat[cle]));
+const FICHIER_3D = 'modeles/fj40.glb'; // le fichier fourni par le modélisateur
+
+const CATALOGUE = {
+  moteur: { titre: 'Moteur', type: 'liste', choix: [
+    { id: 'origine', nom: 'Moteur d\'origine 2F 6 cylindres 4,2 L', prix: 0 },
+    { id: 'coyote', nom: 'V8 Ford Coyote 5,0 L', prix: 15000 },
+  ]},
+  // Teintes d'origine Toyota du Land Cruiser (nom et code peinture d'usine, source : importarchive.com).
+  // Les couleurs à l'écran (hex) sont des approximations, à comparer avec un nuancier réel.
+  carrosserie: { titre: 'Carrosserie', type: 'couleur', materiau: 'Carrosserie', choix: [
+    { id: 'blanc', nom: 'Cygnus White (T12)', hex: '#ebe8dc', prix: 0 },
+    { id: 'sable', nom: 'Dune Beige (416)', hex: '#c4ab7f', prix: 1200 },
+    { id: 'moutarde', nom: 'Yellow (541)', hex: '#d9a520', prix: 1300 },
+    { id: 'pollux', nom: 'Pollux Orange (304)', hex: '#d2601e', prix: 1300 },
+    { id: 'pueblo', nom: 'Pueblo Brown (415)', hex: '#6b4428', prix: 1300 },
+    { id: 'rouge', nom: 'Freeborn Red (309)', hex: '#9b1b1c', prix: 1500 },
+    { id: 'rustic', nom: 'Rustic Green (621)', hex: '#566b45', prix: 1300 },
+    { id: 'kaki', nom: 'Olive (637)', hex: '#6a6538', prix: 1300 },
+    { id: 'cadet', nom: 'Cadet Blue (T449)', hex: '#4c6668', prix: 1300 },  // teinte du début, préférée par Mathis (04/10/2026)
+    { id: 'ciel', nom: 'Sky Blue (854)', hex: '#86b0d0', prix: 1200 },
+    { id: 'royal', nom: 'Royal Blue (T452)', hex: '#234a8c', prix: 1300 },
+    { id: 'medium_bleu', nom: 'Medium Blue (857)', hex: '#3b6894', prix: 1300 },
+    { id: 'heath', nom: 'Heath Gray (113)', hex: '#8f9290', prix: 1200 },
+    { id: 'metal_gray', nom: 'Metal Gray', hex: '#6b6d70', prix: 1300, metallise: true },  // métallisée, recalée sur les photos de Mathis (04/10/2026) ; code Toyota à confirmer
+    // hors catalogue Toyota
+    { id: 'ardoise', nom: 'Gris Ardoise', hex: '#6c7174', prix: 1300 },  // gris uni du FJ40 1967 des photos de Mathis (04/10/2026)
+    { id: 'emeraude', nom: 'Vert Émeraude', hex: '#1f6669', prix: 1300 },  // mesuré sur les photos de Mathis (FJ40 Classic 4x4 Import)
+    { id: 'brume', nom: 'Vert Brume', hex: '#8cae9b', prix: 1200 },
+    { id: 'noir', nom: 'Noir Profond', hex: '#101011', prix: 1800 },
+  ]},
+  toit_type: { titre: 'Toit', type: 'liste', choix: [
+    // « montre » = variante(s) 3D affichée(s) pour ce choix ([] = aucun toit, véhicule ouvert)
+    { id: 'sans', nom: 'Sans toit', prix: 0, montre: [] },
+    { id: 'rigide', nom: 'Hard top', prix: 2500 },
+    { id: 'bache', nom: 'Soft top', prix: 2000 },
+    { id: 'les_deux', nom: 'Hard top + soft top', prix: 4500, montre: ['bache', 'hardtop_sol'] },  // soft top monté, hard top posé à côté
+  ]},
+  // Hard top de la couleur de la carrosserie par défaut ; autre couleur en option (décision de Mathis, prix provisoires).
+  toit: { titre: 'Couleur du hard top', type: 'couleur', materiau: 'Toit', petit: true, si: e => ['rigide', 'les_deux'].includes(e.toit_type), choix: [
+    { id: 'assorti', nom: 'Couleur carrosserie', hex: null, prix: 0 },
+    { id: 'blanc', nom: 'Blanc', hex: '#ecebe6', prix: 400 },
+    { id: 'noir', nom: 'Noir', hex: '#141414', prix: 400 },
+  ]},
+  bache: { titre: 'Couleur du soft top', type: 'couleur', materiau: 'Bache', petit: true, si: e => ['bache', 'les_deux'].includes(e.toit_type), choix: [
+    { id: 'noir', nom: 'Noir', hex: '#1c1c1c', prix: 0 },
+    { id: 'creme', nom: 'Crème', hex: '#d9cfb6', prix: 0 },
+    { id: 'sable', nom: 'Beige sable', hex: '#b5a47e', prix: 0 },
+  ]},
+  calandre: { titre: 'Calandre', type: 'couleur', materiau: 'Calandre', petit: true, choix: [
+    { id: 'blanc', nom: 'Blanc', hex: '#e6e4de', prix: 0 },
+    { id: 'noir', nom: 'Noir', hex: '#151515', prix: 0 },
+    { id: 'gris', nom: 'Gris', hex: '#7d7f82', prix: 0 },
+  ]},
+  jantes_type: { titre: 'Jantes', type: 'liste', choix: [
+    { id: 'origine', nom: 'Jantes acier d\'origine', prix: 0 },
+    { id: 'black_rhino', nom: 'Jantes Black Rhino noires', prix: 2000 },
+  ]},
+  jantes: { titre: 'Couleur des jantes', type: 'couleur', materiau: 'Jantes', petit: true, si: e => e.jantes_type === 'origine', choix: [
+    { id: 'blanc', nom: 'Blanc', hex: '#e9e7e0', prix: 0 },
+    { id: 'noir', nom: 'Noir mat', hex: '#1a1a1a', prix: 350 },
+    { id: 'chrome', nom: 'Chrome', hex: '#d8d8d8', prix: 900, metal: true },
+  ]},
+  pneus: { titre: 'Pneus', type: 'liste', choix: [
+    { id: 'standard', nom: 'Pneus standard', prix: 0 },
+    { id: 'bfg', nom: 'BFGoodrich All-Terrain T/A KO2', prix: 2500 },
+  ]},
+  sieges: { titre: 'Sièges avant', type: 'liste', choix: [
+    { id: 'banquette', nom: 'Banquette d\'origine', prix: 0 },
+    { id: 'baquets', nom: '2 sièges individuels', prix: 950 },
+  ]},
+  cuir: { titre: 'Cuir intérieur', type: 'couleur', materiau: 'Cuir', petit: true, choix: [
+    { id: 'caramel', nom: 'Caramel', hex: '#a86c38', prix: 0 },
+    { id: 'cognac', nom: 'Cognac vintage', hex: '#6a3520', prix: 0 },
+    { id: 'tabac', nom: 'Tabac', hex: '#4a2c1c', prix: 0 },
+    { id: 'noir', nom: 'Noir', hex: '#151515', prix: 0 },
+    { id: 'anthracite', nom: 'Anthracite', hex: '#3a3b3d', prix: 0 },
+    { id: 'bordeaux', nom: 'Bordeaux', hex: '#561318', prix: 0 },
+    { id: 'sable', nom: 'Beige sable', hex: '#b9a27e', prix: 0 },
+  ]},
+  // Sellerie bicolore : centre des sièges = « Cuir intérieur », côtés et bourrelets = cette couleur (prix provisoire)
+  cuir_cotes: { titre: 'Sellerie bicolore (côtés)', type: 'couleur', petit: true, choix: [
+    { id: 'identique', nom: 'Une seule couleur', hex: null, prix: 0 },
+    { id: 'tabac', nom: 'Tabac', hex: '#4a2c1c', prix: 900 },
+    { id: 'cognac', nom: 'Cognac vintage', hex: '#6a3520', prix: 900 },
+    { id: 'noir', nom: 'Noir', hex: '#151515', prix: 900 },
+    { id: 'anthracite', nom: 'Anthracite', hex: '#3a3b3d', prix: 900 },
+    { id: 'bordeaux', nom: 'Bordeaux', hex: '#561318', prix: 900 },
+    { id: 'sable', nom: 'Beige sable', hex: '#b9a27e', prix: 900 },
+  ]},
+  fil: { titre: 'Couleur des surpiqûres', type: 'couleur', petit: true, choix: [
+    { id: 'creme', nom: 'Crème', hex: '#e9dcc0', prix: 0 },
+    { id: 'ton', nom: 'Ton sur ton', hex: null, prix: 0 },
+    { id: 'noir', nom: 'Noir', hex: '#1a1a1a', prix: 0 },
+  ]},
+  // Style masqué tant que le rendu des surpiqûres n'est pas au point (mettre STYLE_CUIR_PRET à true)
+  cuir_style: { titre: 'Style du cuir', type: 'liste', si: () => STYLE_CUIR_PRET, choix: [
+    { id: 'losange', nom: 'Losange (Diamond)', prix: 0 },
+    { id: 'plisse', nom: 'Plis verticaux classiques', prix: 0 },
+    { id: 'lisse', nom: 'Lisse (sans surpiqûres)', prix: 0 },
+  ]},
+  pare_chocs: { titre: 'Pare-chocs', type: 'couleur', materiau: 'Pare-chocs', petit: true, choix: [
+    { id: 'noir', nom: 'Noir', hex: '#121212', prix: 0 },
+    { id: 'chrome', nom: 'Chromé', hex: '#d8d8d8', prix: 900, metal: true },
+  ]},
+  equipements: { titre: 'Équipements', type: 'cases', choix: [
+    { id: 'clim', nom: 'Climatisation', prix: 3000 },
+    { id: 'freins', nom: 'Freins à disque aux 4 roues', prix: 3900 },
+    { id: 'ome', nom: 'Kit suspension Old Man Emu', prix: 3500 },
+    { id: 'direction', nom: 'Direction hydraulique', prix: 2500 },
+    { id: 'radio', nom: 'Radio rétro Bluetooth', prix: 1100 },
+    { id: 'ceintures', nom: 'Ceintures 3 points', prix: null },
+    { id: 'alarme', nom: 'Alarme + traceur GPS', prix: null },
+    // ajoutés le 04/10/2026 — prix provisoires, à valider par Mathis
+    { id: 'phares_led', nom: 'Phares LED 7 pouces', prix: 650 },
+    { id: 'isolation', nom: 'Isolation phonique et thermique', prix: 1800 },
+    { id: 'chauffants', nom: 'Sièges chauffants', prix: 850 },
+    { id: 'volant', nom: 'Volant bois et aluminium', prix: 650 },
+    { id: 'tapis', nom: 'Tapis de sol bordés cuir', prix: 450 },
+    { id: 'usb', nom: 'Prises USB-C et chargeur à induction dissimulés', prix: 350 },
+    { id: 'camera', nom: 'Caméra de recul discrète', prix: 700 },
+    { id: 'echappement', nom: 'Échappement inox', prix: 1400 },
+    { id: 'anticorrosion', nom: 'Traitement anticorrosion des corps creux', prix: 1200 },
+    { id: 'coffre', nom: 'Coffre de rangement verrouillable', prix: 900 },
+  ]},
+  accessoires: { titre: 'Accessoires', type: 'cases', choix: [
+    { id: 'galerie', nom: 'Galerie de toit (avec hard top)', prix: 950, si: e => e.toit_type === 'rigide' },
+    { id: 'antibrouillards', nom: 'Phares antibrouillard', prix: 420 },
+    { id: 'treuil', nom: 'Treuil WARN VR EVO 10 (10 000 lb)', prix: 1900 },
+    { id: 'console', nom: 'Console centrale (dessus en cuir)', prix: 650, si: e => e.sieges === 'baquets' },
+    { id: 'longue_portee', nom: 'Feux longue portée', prix: 450 },
+    { id: 'feux_led', nom: 'Feux LED dans le pare-chocs', prix: 450 },
+    { id: 'roue_secours', nom: 'Roue de secours arrière', prix: 250 },
+    { id: 'manilles', nom: 'Manilles avant', prix: 120 },
+  ]},
+};
+
+// ─────────────────────────────────────────────────────────────
+// LANGUES — le français sert de référence ; anglais et espagnol à côté.
+// Langue choisie : ?lang=xx dans l'adresse, sinon dernier choix du visiteur,
+// sinon langue du navigateur, sinon anglais.
+// ─────────────────────────────────────────────────────────────
+// Lien vers le site vitrine (null = configurateur seul, sans lien de retour).
+// Le site le renseigne lui-même quand il intègre le configurateur.
+const LIEN_SITE = null;
+const LANGUES = ['fr', 'en', 'es'];
+let langue = (() => {
+  const q = new URLSearchParams(location.search).get('lang');
+  if (LANGUES.includes(q)) return q;
+  try { const s = localStorage.getItem('langue'); if (LANGUES.includes(s)) return s; } catch {}
+  for (const l of navigator.languages ?? [navigator.language]) {
+    const c = String(l).slice(0, 2).toLowerCase();
+    if (LANGUES.includes(c)) return c;
+  }
+  return 'en';
+})();
+const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES' };
+// Texte français → [anglais, espagnol]
+const TRAD = {
+  // interface
+  'Chargement du véhicule…': ['Loading the vehicle…', 'Cargando el vehículo…'],
+  '← Accueil': ['← Home', '← Inicio'],
+  'Configurateur': ['Configurator', 'Configurador'],
+  'Prix total': ['Total price', 'Precio total'],
+  'Demander un devis': ['Request a quote', 'Solicitar presupuesto'],
+  'Partager': ['Share', 'Compartir'],
+  'Copier le lien de cette configuration': ['Copy the link to this configuration', 'Copiar el enlace de esta configuración'],
+  'Copier le récapitulatif de la configuration': ['Copy the configuration summary', 'Copiar el resumen de la configuración'],
+  'Votre FJ40': ['Your FJ40', 'Su FJ40'],
+  'Récapitulatif de votre configuration.': ['Summary of your configuration.', 'Resumen de su configuración.'],
+  'Modifier': ['Edit', 'Modificar'],
+  'Envoyer la demande': ['Send the request', 'Enviar la solicitud'],
+  'Modèle provisoire — en attente du fichier 3D définitif': ['Temporary model — final 3D file pending', 'Modelo provisional — a la espera del archivo 3D definitivo'],
+  '+ options sur devis': ['+ options on quotation', '+ opciones bajo presupuesto'],
+  'Sur devis': ['On quotation', 'Bajo presupuesto'],
+  'Inclus': ['Included', 'Incluido'],
+  'Prix de base': ['Base price', 'Precio base'],
+  'Total': ['Total', 'Total'],
+  'Nos réalisations': ['Our work', 'Nuestros trabajos'],
+  'Photos réelles': ['Real photos', 'Fotos reales'],
+  'Cuir caramel, losange et surpiqûres crème': ['Caramel leather, diamond quilting, cream stitching', 'Cuero caramelo, rombos y pespuntes crema'],
+  'Sièges individuels et console centrale': ['Individual seats and center console', 'Asientos individuales y consola central'],
+  'Cuir cognac vintage, losange': ['Vintage cognac leather, diamond quilting', 'Cuero coñac vintage, rombos'],
+  'Banquettes arrière en cuir cognac': ['Rear benches in cognac leather', 'Banquetas traseras en cuero coñac'],
+  'Studio': ['Studio', 'Estudio'],
+  'Coucher de soleil': ['Sunset', 'Atardecer'],
+  'Plein jour': ['Daylight', 'Pleno día'],
+  '3/4 avant': ['Front 3/4', '3/4 delantero'],
+  'Profil': ['Side', 'Perfil'],
+  'Face': ['Front', 'Frontal'],
+  'Arrière': ['Rear', 'Trasera'],
+  'Dessus': ['Top', 'Superior'],
+  'Intérieur': ['Interior', 'Interior'],
+  '⟳ Rotation': ['⟳ Rotate', '⟳ Rotación'],
+  '⤢ Plein écran': ['⤢ Full screen', '⤢ Pantalla completa'],
+  'Plein écran indisponible ici': ['Full screen is not available here', 'Pantalla completa no disponible aquí'],
+  'Demande prête — l’envoi sera branché sur le site': ['Request ready — sending will be connected on the website', 'Solicitud lista — el envío se conectará en el sitio web'],
+  'Lien de la configuration copié': ['Configuration link copied', 'Enlace de la configuración copiado'],
+  'Copiez l’adresse de la page pour partager': ['Copy the page address to share', 'Copie la dirección de la página para compartir'],
+  'Ma configuration Land Cruiser FJ40': ['My Land Cruiser FJ40 configuration', 'Mi configuración Land Cruiser FJ40'],
+  'Récapitulatif copié': ['Summary copied', 'Resumen copiado'],
+  'Copie impossible sur cet appareil': ['Copying is not possible on this device', 'No se puede copiar en este dispositivo'],
+  // titres des groupes
+  'Moteur': ['Engine', 'Motor'],
+  'Carrosserie': ['Body color', 'Carrocería'],
+  'Toit': ['Roof', 'Techo'],
+  'Couleur du hard top': ['Hard top color', 'Color del hard top'],
+  'Sans toit': ['No top', 'Sin techo'],
+  'Hard top + soft top': ['Hard top + soft top', 'Hard top + soft top'],
+  'Couleur du soft top': ['Soft top color', 'Color del soft top'],
+  'Calandre': ['Grille', 'Calandra'],
+  'Couleur des jantes': ['Wheel color', 'Color de las llantas'],
+  'Jantes acier d\'origine': ['Original steel wheels', 'Llantas de acero originales'],
+  'Jantes Black Rhino noires': ['Black Rhino wheels, black', 'Llantas Black Rhino negras'],
+  'Pneus': ['Tires', 'Neumáticos'],
+  'Pneus standard': ['Standard tires', 'Neumáticos estándar'],
+  'BFGoodrich All-Terrain T/A KO2': ['BFGoodrich All-Terrain T/A KO2', 'BFGoodrich All-Terrain T/A KO2'],
+  'Jantes': ['Wheels', 'Llantas'],
+  'Sièges avant': ['Front seats', 'Asientos delanteros'],
+  'Cuir intérieur': ['Interior leather', 'Cuero interior'],
+  'Couleur des surpiqûres': ['Stitching color', 'Color de los pespuntes'],
+  'Sellerie bicolore (côtés)': ['Two-tone upholstery (sides)', 'Tapicería bicolor (laterales)'],
+  'Une seule couleur': ['Single color', 'Un solo color'],
+  'Style du cuir': ['Leather style', 'Estilo del cuero'],
+  'Pare-chocs': ['Bumpers', 'Parachoques'],
+  'Équipements': ['Equipment', 'Equipamiento'],
+  'Accessoires': ['Accessories', 'Accesorios'],
+  // choix
+  'Moteur d\'origine 2F 6 cylindres 4,2 L': ['Original 2F engine, 4.2 L inline-six', 'Motor original 2F de 6 cilindros, 4,2 L'],
+  'V8 Ford Coyote 5,0 L': ['Ford Coyote 5.0 L V8', 'V8 Ford Coyote 5,0 L'],
+  'Vert Brume': ['Mist Green', 'Verde Bruma'],
+  'Noir Profond': ['Deep Black', 'Negro Profundo'],
+  'Blanc': ['White', 'Blanco'],
+  'Couleur carrosserie': ['Body color', 'Color de la carrocería'],
+  'Vert Émeraude': ['Emerald Green', 'Verde Esmeralda'],
+  'Gris Ardoise': ['Slate Gray', 'Gris Pizarra'],
+  'Crème': ['Cream', 'Crema'],
+  'Kit suspension Old Man Emu': ['Old Man Emu suspension kit', 'Kit de suspensión Old Man Emu'],
+  'Noir': ['Black', 'Negro'],
+  'Beige sable': ['Sand beige', 'Beige arena'],
+  'Kaki': ['Khaki', 'Caqui'],
+  'Gris': ['Gray', 'Gris'],
+  'Noir mat': ['Matte black', 'Negro mate'],
+  'Chrome': ['Chrome', 'Cromo'],
+  'Chromé': ['Chrome', 'Cromado'],
+  'Banquette d\'origine': ['Original bench seat', 'Banqueta original'],
+  '2 sièges individuels': ['2 individual seats', '2 asientos individuales'],
+  'Caramel': ['Caramel', 'Caramelo'],
+  'Cognac vintage': ['Vintage cognac', 'Coñac vintage'],
+  'Tabac': ['Tobacco', 'Tabaco'],
+  'Anthracite': ['Anthracite', 'Antracita'],
+  'Bordeaux': ['Burgundy', 'Burdeos'],
+  'Crème': ['Cream', 'Crema'],
+  'Ton sur ton': ['Tone on tone', 'Tono sobre tono'],
+  'Losange (Diamond)': ['Diamond quilting', 'Rombos (Diamond)'],
+  'Plis verticaux classiques': ['Classic vertical pleats', 'Pliegues verticales clásicos'],
+  'Lisse (sans surpiqûres)': ['Smooth (no stitching)', 'Liso (sin pespuntes)'],
+  'Climatisation': ['Air conditioning', 'Aire acondicionado'],
+  'Freins à disque aux 4 roues': ['Four-wheel disc brakes', 'Frenos de disco en las 4 ruedas'],
+  'Direction hydraulique': ['Power steering', 'Dirección asistida'],
+  'Radio rétro Bluetooth': ['Retro Bluetooth radio', 'Radio retro Bluetooth'],
+  'Ceintures 3 points': ['3-point seat belts', 'Cinturones de 3 puntos'],
+  'Alarme + traceur GPS': ['Alarm + GPS tracker', 'Alarma + localizador GPS'],
+  'Galerie de toit (avec hard top)': ['Roof rack (with hard top)', 'Baca de techo (con techo rígido)'],
+  'Phares LED 7 pouces': ['7-inch LED headlights', 'Faros LED de 7 pulgadas'],
+  'Isolation phonique et thermique': ['Sound and heat insulation', 'Aislamiento acústico y térmico'],
+  'Sièges chauffants': ['Heated seats', 'Asientos calefactados'],
+  'Volant bois et aluminium': ['Wood and aluminium steering wheel', 'Volante de madera y aluminio'],
+  'Tapis de sol bordés cuir': ['Leather-trimmed floor mats', 'Alfombrillas ribeteadas en cuero'],
+  'Prises USB-C et chargeur à induction dissimulés': ['Hidden USB-C ports and wireless charger', 'Tomas USB-C y cargador inalámbrico ocultos'],
+  'Caméra de recul discrète': ['Discreet reversing camera', 'Cámara de marcha atrás discreta'],
+  'Échappement inox': ['Stainless steel exhaust', 'Escape de acero inoxidable'],
+  'Traitement anticorrosion des corps creux': ['Cavity rust-proofing treatment', 'Tratamiento anticorrosión de cavidades'],
+  'Coffre de rangement verrouillable': ['Lockable storage box', 'Cofre de almacenamiento con cerradura'],
+  'Phares antibrouillard': ['Fog lights', 'Faros antiniebla'],
+  'Treuil WARN VR EVO 10 (10 000 lb)': ['WARN VR EVO 10 winch (10,000 lb)', 'Cabrestante WARN VR EVO 10 (10 000 lb)'],
+  'Console centrale (dessus en cuir)': ['Center console (leather top)', 'Consola central (tapa de cuero)'],
+  'Feux longue portée': ['Long-range driving lights', 'Faros de largo alcance'],
+  'Feux LED dans le pare-chocs': ['LED lights in the bumper', 'Luces LED en el parachoques'],
+  'Roue de secours arrière': ['Rear spare wheel', 'Rueda de repuesto trasera'],
+  'Manilles avant': ['Front shackles', 'Grilletes delanteros'],
+};
+const t = fr => langue === 'fr' ? fr : (TRAD[fr]?.[LANGUES.indexOf(langue) - 1] ?? fr);
+
+const AMBIANCES = {
+  studio: { nom: 'Studio', fond: 'radial-gradient(ellipse at 50% 45%, #2a2a2e 0%, #121214 55%, #08080a 100%)', soleil: 0xffffff, force: 2.0, env: 0.7, ombre: 0.5 },
+  couchant: { nom: 'Coucher de soleil', fond: 'radial-gradient(ellipse at 50% 70%, #d98a4e 0%, #6b3a2a 40%, #1d1218 100%)', soleil: 0xffb47a, force: 2.3, env: 0.6, ombre: 0.55 },
+  jour: { nom: 'Plein jour', fond: 'radial-gradient(ellipse at 50% 40%, #f4f2ee 0%, #d9d6cf 60%, #bdb9b0 100%)', soleil: 0xffffff, force: 2.5, env: 0.85, ombre: 0.3 },
+};
+
+const VUES = {
+  trois_quarts: { nom: '3/4 avant', pos: [5.2, 2.0, 4.6] },
+  profil: { nom: 'Profil', pos: [0, 1.3, 7.2] },
+  avant: { nom: 'Face', pos: [6.8, 1.4, 0] },
+  arriere: { nom: 'Arrière', pos: [-5.0, 2.0, -4.4] },
+  dessus: { nom: 'Dessus', pos: [0.5, 7.5, 2.2] },
+  interieur: { nom: 'Intérieur', pos: [-0.62, 1.68, -0.36], cible: [0.6, 1.25, -0.2], interieur: true },
+};
+
+// ─────────────────────────────────────────────────────────────
+// ÉTAT (lu depuis le lien partagé s'il y en a un)
+// ─────────────────────────────────────────────────────────────
+const etat = { moteur: 'origine', carrosserie: 'blanc', toit_type: 'sans', toit: 'assorti', bache: 'noir', calandre: 'blanc', jantes_type: 'origine', jantes: 'blanc', pneus: 'standard', sieges: 'banquette', cuir: 'caramel', cuir_cotes: 'identique', fil: 'creme', cuir_style: 'losange', pare_chocs: 'noir', accessoires: new Set(), equipements: new Set() };
+const CASES = ['accessoires', 'equipements'];
+(function lireLien() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  for (const cle of Object.keys(etat)) {
+    if (!p.has(cle)) continue;
+    if (CASES.includes(cle)) etat[cle] = new Set(p.get(cle).split(',').filter(id => CATALOGUE[cle].choix.some(c => c.id === id)));
+    else if (CATALOGUE[cle].choix.some(c => c.id === p.get(cle))) etat[cle] = p.get(cle);
+  }
+})();
+const trouver = (cle, id = etat[cle]) => CATALOGUE[cle].choix.find(c => c.id === id);
+// Un accessoire ou un toit n'est proposé que s'il existe dans le fichier 3D chargé
+let vehiculeCharge = false;
+const disponible = (cle, c) => !vehiculeCharge ? true
+  : cle === 'accessoires' ? !!options[c.id]
+  : cle in PREFIXES_VARIANTES ? ('montre' in c ? c.montre.every(m => variantes[cle][m]) : !!variantes[cle][c.id]) : true;
+const permis = c => !c.si || c.si(etat);
+const choixDispo = cle => CATALOGUE[cle].choix.filter(c => disponible(cle, c) && permis(c));
+
+// ─────────────────────────────────────────────────────────────
+// SCÈNE 3D
+// ─────────────────────────────────────────────────────────────
+const conteneur = document.getElementById('scene');
+const rendu = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+rendu.setPixelRatio(Math.min(devicePixelRatio, 2));
+// Rendu « neutre » : conserve les teintes (l'ancien rendu ACES les éclaircissait d'environ 30 %).
+rendu.toneMapping = THREE.NeutralToneMapping;
+rendu.toneMappingExposure = 0.92;
+rendu.shadowMap.enabled = true;
+rendu.shadowMap.type = THREE.PCFSoftShadowMap;
+conteneur.appendChild(rendu.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(rendu);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+camera.position.set(...VUES.trois_quarts.pos);
+const controles = new OrbitControls(camera, rendu.domElement);
+const CIBLE_EXT = [0, 0.95, 0];
+controles.target.set(...CIBLE_EXT);
+controles.enableDamping = true;
+controles.dampingFactor = 0.06;
+controles.minDistance = 4;
+controles.maxDistance = 12;
+controles.maxPolarAngle = Math.PI * 0.49;
+controles.enablePan = false;
+controles.autoRotate = true;
+controles.autoRotateSpeed = 0.6;
+function limitesCamera(interieur) {
+  controles.minDistance = interieur ? 0.25 : 4;
+  controles.maxDistance = interieur ? 0.25 : 12;
+  controles.maxPolarAngle = interieur ? Math.PI * 0.9 : Math.PI * 0.49;
+  controles.rotateSpeed = interieur ? -0.45 : 1;
+  controles.enableZoom = !interieur;
+}
+controles.addEventListener('start', () => { controles.autoRotate = false; animCamera = null; });
+
+const soleil = new THREE.DirectionalLight(0xffffff, 2.2);
+soleil.position.set(4, 8, 3);
+soleil.castShadow = true;
+soleil.shadow.mapSize.set(2048, 2048);
+Object.assign(soleil.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 20 });
+soleil.shadow.radius = 6;
+soleil.shadow.bias = -0.0005;
+scene.add(soleil, new THREE.HemisphereLight(0xffffff, 0x222222, 0.3));
+
+// Sol : ombre portée + ombre de contact douce
+const ombreSol = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.5 }));
+ombreSol.rotation.x = -Math.PI / 2;
+ombreSol.receiveShadow = true;
+scene.add(ombreSol);
+const tex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'), d = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  d.addColorStop(0, 'rgba(0,0,0,.75)'); d.addColorStop(.55, 'rgba(0,0,0,.35)'); d.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = d; g.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(c);
+})();
+const contact = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 3.2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+contact.rotation.x = -Math.PI / 2; contact.position.y = 0.002;
+scene.add(contact);
+
+// ─────────────────────────────────────────────────────────────
+// MATÉRIAUX PILOTÉS PAR LE CONFIGURATEUR
+// (dans le fichier du modélisateur, ils doivent porter exactement ces noms)
+// ─────────────────────────────────────────────────────────────
+const materiaux = {
+  Carrosserie: new THREE.MeshPhysicalMaterial({ name: 'Carrosserie', roughness: 0.42, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.55, specularIntensity: 0.4 }),
+  Toit: new THREE.MeshPhysicalMaterial({ name: 'Toit', roughness: 0.35, metalness: 0.05, clearcoat: 0.8, clearcoatRoughness: 0.1 }),
+  Bache: new THREE.MeshStandardMaterial({ name: 'Bache', roughness: 0.95, metalness: 0 }),
+  Cuir: new THREE.MeshPhysicalMaterial({ name: 'Cuir', roughness: 0.55, metalness: 0, sheen: 0.3, sheenRoughness: 0.6 }),
+  'Cuir bord': new THREE.MeshBasicMaterial({ name: 'Cuir bord' }),  // sert seulement à porter la couleur des côtés (fondu)
+  // (le mélange du fil est branché plus bas, une fois les uniformes créés)
+  'Pare-chocs': new THREE.MeshStandardMaterial({ name: 'Pare-chocs', roughness: 0.45, metalness: 0.3 }),
+  // amortisseurs : noirs, jaunes avec le kit Old Man Emu (option « ome »)
+  Amortisseurs: new THREE.MeshStandardMaterial({ name: 'Amortisseurs', roughness: 0.4, metalness: 0.2 }),
+  // chapeau central des jantes d'origine : chromé, ou noir avec l'option « Noir mat »
+  'Chapeau jantes': new THREE.MeshStandardMaterial({ name: 'Chapeau jantes', roughness: 0.07, metalness: 1 }),
+  Calandre: new THREE.MeshStandardMaterial({ name: 'Calandre', roughness: 0.45, metalness: 0.1 }),
+  Jantes: new THREE.MeshStandardMaterial({ name: 'Jantes', roughness: 0.35, metalness: 0.3 }),
+};
+const m = {
+  chrome: new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 1, roughness: 0.12 }),
+  pneu: new THREE.MeshStandardMaterial({ color: 0x161616, roughness: 0.9 }),
+  noir: new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.7 }),
+  plastique: new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.55 }),
+  vitre: new THREE.MeshPhysicalMaterial({ color: 0x0a0e12, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.8 }),
+  phare: new THREE.MeshPhysicalMaterial({ color: 0xffffff, emissive: 0xfff4dd, emissiveIntensity: 0.25, roughness: 0.05, transmission: 0.2 }),
+  orange: new THREE.MeshStandardMaterial({ color: 0xff8a1f, emissive: 0x552200, roughness: 0.3 }),
+  rouge: new THREE.MeshStandardMaterial({ color: 0xa00d0d, emissive: 0x330000, roughness: 0.3 }),
+};
+
+// ─────────────────────────────────────────────────────────────
+// RELIEFS DU CUIR (cartes de normales dessinées en code)
+// ─────────────────────────────────────────────────────────────
+function carteNormale(hauteur, taille = 1024, force = 6) {
+  const h = new Float32Array(taille * taille);
+  for (let y = 0; y < taille; y++) for (let x = 0; x < taille; x++) h[y * taille + x] = hauteur(x / taille, y / taille);
+  const c = document.createElement('canvas'); c.width = c.height = taille;
+  const g = c.getContext('2d'), img = g.createImageData(taille, taille);
+  const at = (x, y) => h[((y + taille) % taille) * taille + ((x + taille) % taille)];
+  for (let y = 0; y < taille; y++) for (let x = 0; x < taille; x++) {
+    const dx = (at(x + 1, y) - at(x - 1, y)) * force, dy = (at(x, y + 1) - at(x, y - 1)) * force;
+    const l = Math.hypot(dx, dy, 1), i = (y * taille + x) * 4;
+    img.data[i] = (-dx / l * 0.5 + 0.5) * 255; img.data[i + 1] = (dy / l * 0.5 + 0.5) * 255;
+    img.data[i + 2] = (1 / l * 0.5 + 0.5) * 255; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+const bruit = (() => { const n = new Float32Array(256 * 256).map(() => Math.random());
+  return (u, v) => { const x = Math.floor(u * 256) & 255, y = Math.floor(v * 256) & 255; return n[y * 256 + x]; }; })();
+// grain du cuir : bruit lissé sur deux échelles
+const grain = (u, v) => (bruit(u * 4, v * 4) * 0.6 + bruit(u * 8.3, v * 8.3) * 0.4) * 0.006;
+const fract = x => x - Math.floor(x);
+// fil de surpiqûre : petits segments le long d'une couture (d = distance à la couture, t = abscisse)
+const fil = (d, t, pas) => Math.abs(d) < 0.006 && fract(t * pas) < 0.6;
+const RELIEFS = {
+  // cuir lisse : seulement le grain, aucune couture
+  lisse: { repetition: 3, rugosite: 0.45, h: (u, v) => grain(u, v) * 1.5, fil: () => false },
+  // losanges matelassés : couture creuse sur les diagonales, un rang de surpiqûre de chaque côté
+  losange: { repetition: 3.5, rugosite: 0.5,
+    h: (u, v) => {
+      const n = 4, a = fract((u + v) * n), b = fract((u - v) * n);
+      const coussin = Math.pow(Math.max(0, Math.sin(Math.PI * a) * Math.sin(Math.PI * b)), 0.3) * 0.3;
+      return coussin - (fil_l(u, v) ? 0.02 : 0) + grain(u, v); },
+    fil: (u, v) => fil_l(u, v) },
+  // plis verticaux bombés, couture creuse entre deux plis, surpiqûre de chaque côté
+  plisse: { repetition: 2.9, rugosite: 0.48,
+    h: (u, v) => {
+      const a = fract(u * 7);
+      return Math.pow(Math.sin(Math.PI * a), 0.45) * 0.24 - (fil_p(u, v) ? 0.02 : 0) + grain(u, v); },
+    fil: (u, v) => fil_p(u, v) },
+};
+function fil_l(u, v) {
+  const n = 4, a = fract((u + v) * n), b = fract((u - v) * n);
+  return fil(Math.min(a, 1 - a) - 0.05, b, 9) || fil(Math.min(b, 1 - b) - 0.05, a, 9);
+}
+function fil_p(u, v) { const a = fract(u * 7); return fil(a - 0.07, v * 7, 6) || fil(1 - a - 0.07, v * 7, 6); }
+const cartesCuir = {};
+function carteMasque(estFil, taille = 1024) {
+  const c = document.createElement('canvas'); c.width = c.height = taille;
+  const g = c.getContext('2d'), img = g.createImageData(taille, taille);
+  for (let y = 0; y < taille; y++) for (let x = 0; x < taille; x++) {
+    const i = (y * taille + x) * 4, f = estFil(x / taille, y / taille) ? 255 : 0;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = f; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+// Le fil a sa propre couleur : on la mélange à celle du cuir là où le masque est blanc
+// (même coordonnées et même répétition que la carte de relief).
+const uniformesFil = { masqueFil: { value: null }, couleurFil: { value: new THREE.Color('#e9dcc0') },
+  couleurBord: { value: materiaux['Cuir bord'].color }, margePanneau: { value: 0.05 } };
+
+function reliefCuir(id) {
+  const r = RELIEFS[id];
+  if (!cartesCuir[id]) cartesCuir[id] = { relief: carteNormale(r.h), fil: carteMasque(r.fil) };
+  const t = cartesCuir[id].relief; t.repeat.set(r.repetition, r.repetition);
+  uniformesFil.masqueFil.value = cartesCuir[id].fil;
+  materiaux.Cuir.normalMap = t; materiaux.Cuir.normalScale.set(2.2, 2.2);
+  materiaux.Cuir.roughness = r.rugosite; materiaux.Cuir.needsUpdate = true;
+}
+
+// Sièges : panneau central (couleur principale + motif + surpiqûres) et côtés lisses (couleur « côtés »),
+// d'après la couleur de sommet « panneau » du modèle (distances aux bords, en mètres). Sans ce repère
+// (contre-portes, console…), tout le cuir garde la couleur principale et le motif.
+materiaux.Cuir.onBeforeCompile = shader => {
+  Object.assign(shader.uniforms, uniformesFil);
+  shader.vertexShader = 'attribute vec4 panneau;\nvarying vec4 vPanneau;\n' + shader.vertexShader.replace(
+    '#include <begin_vertex>', '#include <begin_vertex>\n  vPanneau = panneau;');
+  shader.fragmentShader = 'uniform sampler2D masqueFil;\nuniform vec3 couleurFil;\nuniform vec3 couleurBord;\nuniform float margePanneau;\nvarying vec4 vPanneau;\n' + shader.fragmentShader.replace(
+    '#include <map_fragment>',
+    `#include <map_fragment>
+  float dPan = min(min(vPanneau.x, vPanneau.y), min(vPanneau.z, vPanneau.w));
+  bool sansRepere = vPanneau.w > 0.5 && max(max(vPanneau.x, vPanneau.y), vPanneau.z) < 1e-4;
+  float centrePan = sansRepere ? 1.0 : smoothstep(margePanneau - 0.0015, margePanneau + 0.0015, dPan);
+  diffuseColor.rgb = mix(couleurBord, diffuseColor.rgb, centrePan);
+#ifdef USE_NORMALMAP
+  float fil = texture2D(masqueFil, vNormalMapUv).r * centrePan;
+  diffuseColor.rgb = mix(diffuseColor.rgb, couleurFil, fil * 0.7);
+#endif
+  // couture le long du panneau (points espacés de 8 mm)
+  if (!sansRepere) {
+    float ligne = 1.0 - smoothstep(0.0006, 0.0016, abs(dPan - margePanneau + 0.006));
+    float le_long = min(vPanneau.x, vPanneau.y) < min(vPanneau.z, vPanneau.w) ? vPanneau.z : vPanneau.x;
+    float points = step(0.45, fract(le_long * 125.0));
+    diffuseColor.rgb = mix(diffuseColor.rgb, couleurFil, ligne * points * 0.75);
+  }`).replace(
+    '#include <normal_fragment_maps>',
+    'vec3 normalBase = normal;\n#include <normal_fragment_maps>\n  normal = normalize(mix(normalBase, normal, centrePan));');
+};
+
+// ─────────────────────────────────────────────────────────────
+// FJ40 PROVISOIRE (construit en code, remplacé par le vrai fichier dès qu'il existe)
+// ─────────────────────────────────────────────────────────────
+function boite(l, h, p, mat, x, y, z, r = 0) {
+  const geo = r ? new RoundedBoxGeometry(l, h, p, 3, r) : new THREE.BoxGeometry(l, h, p);
+  const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); return o;
+}
+function cyl(rayon, long, mat, x, y, z, axe = 'x', seg = 32) {
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(rayon, rayon, long, seg), mat);
+  if (axe === 'x') o.rotation.z = Math.PI / 2; if (axe === 'z') o.rotation.x = Math.PI / 2;
+  o.position.set(x, y, z); return o;
+}
+function roue() {
+  const g = new THREE.Group();
+  const profil = [[0.2, -0.13], [0.32, -0.135], [0.365, -0.115], [0.385, -0.065], [0.388, 0], [0.385, 0.065], [0.365, 0.115], [0.32, 0.135], [0.2, 0.13]]
+    .map(([r, y]) => new THREE.Vector2(r, y));
+  const pneu = new THREE.Mesh(new THREE.LatheGeometry(profil, 48), m.pneu);
+  g.add(pneu);
+  // crampons
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const c = boite(0.05, 0.022, 0.07, m.pneu, Math.cos(a) * 0.384, 0, Math.sin(a) * 0.384);
+    c.rotation.y = -a; c.position.y = (i % 2 ? 1 : -1) * 0.05;
+    g.add(c);
+  }
+  const jante = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.2, 40), materiaux.Jantes); g.add(jante);
+  const moyeu = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.05, 24), m.chrome); moyeu.position.y = 0.115; g.add(moyeu);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const trou = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.01, 16), m.noir);
+    trou.position.set(Math.cos(a) * 0.15, 0.101, Math.sin(a) * 0.15); g.add(trou);
+  }
+  return g;
+}
+
+function construireFJ40() {
+  const v = new THREE.Group();
+  const C = materiaux.Carrosserie;
+
+  // Caisse : profil latéral avec passages de roues, extrudé sur la largeur
+  const W = 1.6, ar = -1.14, av = 1.14, ry = 0.42, rr = 0.49;
+  const da = Math.asin((0.55 - ry) / rr), dx = Math.cos(da) * rr;
+  const s = new THREE.Shape();
+  s.moveTo(-1.86, 0.55);
+  s.lineTo(ar - dx, 0.55);
+  s.absarc(ar, ry, rr, Math.PI - da, da, true);
+  s.lineTo(av - dx, 0.55);
+  s.absarc(av, ry, rr, Math.PI - da, da, true);
+  s.lineTo(1.72, 0.55);
+  s.lineTo(1.72, 1.04);
+  s.quadraticCurveTo(1.72, 1.08, 1.66, 1.08);
+  s.lineTo(0.42, 1.08);
+  s.lineTo(0.36, 1.18);
+  s.lineTo(-1.86, 1.18);
+  s.lineTo(-1.86, 0.55);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: W, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 4, curveSegments: 32 });
+  geo.translate(0, 0, -W / 2);
+  v.add(new THREE.Mesh(geo, C));
+
+  // Capot légèrement bombé
+  v.add(boite(1.26, 0.07, 1.12, C, 1.06, 1.1, 0, 0.03));
+  // Lignes de portes et poignées
+  for (const z of [-1, 1]) {
+    const zz = z * (W / 2 + 0.033);
+    for (const x of [0.33, -0.56]) v.add(boite(0.008, 0.58, 0.004, m.noir, x, 0.88, zz));
+    v.add(boite(0.12, 0.025, 0.02, m.chrome, -0.44, 1.06, zz + z * 0.008));
+    // clignotants avant
+    v.add(boite(0.03, 0.06, 0.1, m.orange, 1.76, 0.98, z * 0.7));
+    // feux arrière
+    v.add(boite(0.03, 0.14, 0.09, m.rouge, -1.9, 0.86, z * 0.7));
+    // rétroviseurs
+    v.add(boite(0.03, 0.03, 0.12, m.noir, 0.42, 1.28, z * 0.86));
+    v.add(boite(0.03, 0.12, 0.09, m.noir, 0.42, 1.36, z * 0.94, 0.01));
+  }
+
+  // Calandre + phares ronds
+  v.add(boite(0.05, 0.42, 1.36, materiaux.Calandre, 1.75, 0.83, 0, 0.015));
+  for (let i = -5; i <= 5; i++) v.add(boite(0.02, 0.28, 0.025, m.noir, 1.78, 0.8, i * 0.06));
+  for (const z of [-0.52, 0.52]) {
+    v.add(cyl(0.11, 0.05, m.chrome, 1.78, 0.86, z));
+    v.add(cyl(0.09, 0.03, m.phare, 1.8, 0.86, z));
+  }
+  // Pare-chocs
+  v.add(boite(0.12, 0.13, 1.8, m.chrome, 1.84, 0.52, 0, 0.02));
+  v.add(boite(0.12, 0.13, 1.7, m.chrome, -1.93, 0.52, 0, 0.02));
+  // Châssis et ponts
+  v.add(boite(3.5, 0.18, 0.9, m.noir, 0, 0.47, 0));
+  for (const x of [ar, av]) v.add(cyl(0.06, 1.4, m.noir, x, 0.38, 0, 'z', 16));
+
+  // Pare-brise (incliné)
+  const pb = new THREE.Group();
+  pb.position.set(0.37, 1.18, 0); pb.rotation.z = 0.12;
+  pb.add(boite(0.05, 0.05, 1.6, C, 0, 0.64, 0));
+  pb.add(boite(0.05, 0.05, 1.6, C, 0, 0.025, 0));
+  for (const z of [-0.78, 0.78]) pb.add(boite(0.05, 0.66, 0.05, C, 0, 0.33, z));
+  pb.add(boite(0.01, 0.58, 1.5, m.vitre, 0, 0.33, 0));
+  v.add(pb);
+
+  // Variantes de toit (même noms que dans le fichier du modélisateur : toit_xxx)
+  const rigide = new THREE.Group(); rigide.name = 'toit_rigide';
+  rigide.add(boite(2.12, 0.66, 1.6, materiaux.Toit, -0.8, 1.51, 0, 0.06));
+  for (const z of [-1, 1]) {
+    const zz = z * 0.802;
+    rigide.add(boite(0.62, 0.4, 0.006, m.vitre, -0.15, 1.53, zz));
+    rigide.add(boite(0.9, 0.4, 0.006, m.vitre, -1.15, 1.53, zz));
+  }
+  rigide.add(boite(0.006, 0.38, 0.95, m.vitre, -1.862, 1.53, 0));
+  v.add(rigide);
+
+  const bache = new THREE.Group(); bache.name = 'toit_bache';
+  const B = materiaux.Bache;
+  bache.add(boite(2.1, 0.62, 1.6, B, -0.8, 1.5, 0, 0.11));
+  // arceaux visibles sous la toile
+  for (const x of [-1.62, -1.05, -0.48, 0.08]) bache.add(boite(0.05, 0.03, 1.5, B, x, 1.815, 0, 0.012));
+  for (const z of [-1, 1]) {
+    const zz = z * 0.803;
+    bache.add(boite(0.56, 0.32, 0.006, m.vitre, -0.17, 1.55, zz, 0.002));
+    bache.add(boite(0.8, 0.3, 0.006, m.vitre, -1.15, 1.55, zz, 0.002));
+    // coutures
+    bache.add(boite(2.0, 0.008, 0.004, m.noir, -0.8, 1.34, zz));
+  }
+  bache.add(boite(0.006, 0.3, 0.9, m.vitre, -1.853, 1.55, 0));
+  v.add(bache);
+
+  // Roues
+  for (const x of [ar, av]) for (const z of [-0.74, 0.74]) {
+    const r = roue(); r.rotation.x = z > 0 ? Math.PI / 2 : -Math.PI / 2;
+    r.position.set(x, 0.39, z); v.add(r);
+  }
+
+  // ── Accessoires (même noms que dans le fichier du modélisateur : option_xxx)
+  const galerie = new THREE.Group(); galerie.name = 'option_galerie';
+  for (const z of [-0.72, 0.72]) galerie.add(cyl(0.02, 2.0, m.noir, -0.8, 1.98, z, 'x', 12));
+  for (const x of [-1.75, -1.35, -0.95, -0.55, -0.15, 0.15]) galerie.add(cyl(0.018, 1.44, m.noir, x, 1.98, 0, 'z', 12));
+  for (const x of [-1.7, 0.1]) for (const z of [-0.72, 0.72]) galerie.add(cyl(0.018, 0.14, m.noir, x, 1.9, z, 'y', 12));
+  v.add(galerie);
+
+  const fogs = new THREE.Group(); fogs.name = 'option_antibrouillards';
+  for (const z of [-0.36, 0.36]) {
+    fogs.add(cyl(0.065, 0.08, m.noir, 1.86, 0.66, z));
+    fogs.add(cyl(0.055, 0.02, new THREE.MeshStandardMaterial({ color: 0xfff2b0, emissive: 0xffd76a, emissiveIntensity: 0.4 }), 1.9, 0.66, z));
+  }
+  v.add(fogs);
+
+  const snorkel = new THREE.Group(); snorkel.name = 'option_snorkel';
+  snorkel.add(cyl(0.045, 0.85, m.plastique, 0.48, 1.38, 0.86, 'y', 20));
+  snorkel.add(boite(0.18, 0.1, 0.1, m.plastique, 0.54, 1.84, 0.86, 0.03));
+  v.add(snorkel);
+
+  const treuil = new THREE.Group(); treuil.name = 'option_treuil';
+  treuil.add(cyl(0.08, 0.5, m.noir, 1.93, 0.55, 0, 'z', 20));
+  treuil.add(boite(0.1, 0.12, 0.14, m.noir, 1.93, 0.55, 0.3, 0.02));
+  treuil.add(boite(0.06, 0.06, 0.12, m.chrome, 1.98, 0.55, 0, 0.01));
+  v.add(treuil);
+
+  const secours = roue(); secours.name = 'option_roue_secours';
+  secours.rotation.z = Math.PI / 2; secours.position.set(-2.06, 1.0, 0.25);
+  v.add(secours);
+
+  return v;
+}
+
+// ─────────────────────────────────────────────────────────────
+// CHARGEMENT : vrai fichier 3D s'il existe, sinon FJ40 provisoire
+// ─────────────────────────────────────────────────────────────
+let vehicule, options = {}, sourceTexte = '';
+const PREFIXES_VARIANTES = { toit_type: 'toit_', sieges: 'sieges_', jantes_type: 'jantes_' };
+const variantes = { toit_type: {}, sieges: {}, jantes_type: {} };
+let pneuFlanc = null;  // matériau du flanc des pneus + texture BFGoodrich
+function installer(objet, source) {
+  vehicule = objet;
+  vehicule.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = o.receiveShadow = true;
+      // Les matériaux du fichier qui portent un nom connu sont pilotés par le configurateur
+      const remplacer = mat => materiaux[mat?.name] ?? mat;
+      // repère « panneau » des sièges (couleur de sommet du modèle) : renommé pour le shader du cuir
+      if (o.geometry.attributes.color && [].concat(o.material).some(m => m?.name === 'Cuir')) {
+        o.geometry.setAttribute('panneau', o.geometry.attributes.color); o.geometry.deleteAttribute('color');
+      }
+      o.material = Array.isArray(o.material) ? o.material.map(remplacer) : remplacer(o.material);
+    }
+    // Feux : aspect verre brillant + légère lueur (veilleuses)
+    if (o.isMesh) for (const m of [].concat(o.material)) if (m?.name === 'Pneu flanc' && !pneuFlanc) pneuFlanc = { m, map: m.map };
+    if (o.isMesh) for (const m of [].concat(o.material)) if (m?.name === 'Feux' && !m.userData.regle) {
+      m.roughness = 0.08; m.metalness = 0; m.envMapIntensity = 1.6;
+      m.emissive = new THREE.Color(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.35;
+      m.userData.regle = true; m.needsUpdate = true;
+    }
+    if (o.name?.startsWith('option_')) options[o.name.slice(7)] = o;
+    for (const [cle, pre] of Object.entries(PREFIXES_VARIANTES))
+      if (o.name?.startsWith(pre)) { const id = o.name.slice(pre.length).split('__')[0]; (variantes[cle][id] ??= []).push(o); }
+  });
+  vehiculeCharge = true;
+  for (const id of [...etat.accessoires]) if (!options[id]) etat.accessoires.delete(id);
+  for (const cle of Object.keys(variantes))
+    if (!variantes[cle][etat[cle]] && !('montre' in (trouver(cle) ?? {}))) etat[cle] = Object.keys(variantes[cle])[0] ?? etat[cle];
+  construirePanneau();
+  scene.add(vehicule);
+  sourceTexte = source;
+  document.getElementById('source').textContent = t(source);
+  appliquer(true);
+  document.getElementById('chargement').classList.add('cache');
+}
+
+const loader = new GLTFLoader();
+const draco = new DRACOLoader(); draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/libs/draco/');
+loader.setDRACOLoader(draco);
+loader.load(FICHIER_3D,
+  gltf => {
+    const obj = gltf.scene;
+    // Recentrage automatique : roues posées au sol, véhicule centré
+    // le hard top posé au sol ne compte pas dans le centrage du véhicule
+    const sol = obj.getObjectByName('toit_hardtop_sol'), parentSol = sol?.parent;
+    if (sol) parentSol.remove(sol);
+    const b = new THREE.Box3().setFromObject(obj), c = b.getCenter(new THREE.Vector3());
+    if (sol) parentSol.add(sol);
+    obj.position.x -= c.x; obj.position.z -= c.z; obj.position.y -= b.min.y;
+    installer(obj, '');
+  },
+  undefined,
+  () => installer(construireFJ40(), 'Modèle provisoire — en attente du fichier 3D définitif')
+);
+
+// ─────────────────────────────────────────────────────────────
+// APPLICATION DES CHOIX
+// ─────────────────────────────────────────────────────────────
+const cibles = {}; // couleurs vers lesquelles on fait un fondu
+function viser(nom, hex, immediat) {
+  const col = new THREE.Color(hex);
+  if (immediat) materiaux[nom].color.copy(col);
+  cibles[nom] = col;
+}
+function appliquer(immediat = false) {
+  const carr = trouver('carrosserie'), coul = carr.hex;
+  viser('Carrosserie', coul, immediat);
+  for (const m of [materiaux.Carrosserie, materiaux.Toit]) {  // peinture métallisée : reflets plus marqués
+    m.metalness = carr.metallise ? 0.55 : (m === materiaux.Toit ? 0.05 : 0);
+    m.roughness = carr.metallise ? 0.3 : (m === materiaux.Toit ? 0.35 : 0.42);
+  }
+  viser('Toit', trouver('toit').hex ?? coul, immediat);  // par défaut : couleur de la carrosserie
+  viser('Bache', trouver('bache').hex, immediat);
+  for (const [cle, liste] of Object.entries(variantes)) {
+    const c = trouver(cle), cibles = c && 'montre' in c ? c.montre : [etat[cle]];  // ex. « les deux » : soft top + hard top au sol
+    for (const [id, objs] of Object.entries(liste)) for (const obj of objs) obj.visible = cibles.includes(id);
+  }
+  if (pneuFlanc) { pneuFlanc.m.map = etat.pneus === 'bfg' ? pneuFlanc.map : null; pneuFlanc.m.color.set(etat.pneus === 'bfg' ? 0xffffff : 0x0b0b0b); pneuFlanc.m.needsUpdate = true; }
+  viser('Calandre', trouver('calandre').hex, immediat);
+  viser('Amortisseurs', etat.equipements.has('ome') ? '#f2c318' : '#141414', immediat);
+  const pc = trouver('pare_chocs');
+  viser('Pare-chocs', pc.hex, immediat);
+  materiaux['Pare-chocs'].metalness = pc.metal ? 1 : 0.3;
+  materiaux['Pare-chocs'].roughness = pc.metal ? 0.06 : 0.45;
+  viser('Cuir', trouver('cuir').hex, immediat);
+  viser('Cuir bord', trouver('cuir_cotes').hex ?? trouver('cuir').hex, immediat);
+  const f = trouver('fil');
+  uniformesFil.couleurFil.value.set(f.hex ?? trouver('cuir').hex);
+  if (!f.hex) uniformesFil.couleurFil.value.multiplyScalar(1.45);
+  if (STYLE_CUIR_PRET) reliefCuir(etat.cuir_style);
+  else { materiaux.Cuir.normalMap = null; materiaux.Cuir.needsUpdate = true; }
+  const j = trouver('jantes');
+  viser('Jantes', j.hex, immediat);
+  materiaux.Jantes.metalness = j.metal ? 1 : 0.3;
+  const chapeauNoir = j.id === 'noir';
+  viser('Chapeau jantes', chapeauNoir ? '#161616' : '#ebebeb', immediat);
+  materiaux['Chapeau jantes'].metalness = chapeauNoir ? 0.3 : 1;
+  materiaux['Chapeau jantes'].roughness = chapeauNoir ? 0.6 : 0.07;
+  materiaux.Jantes.roughness = j.metal ? 0.1 : (j.id === 'noir' ? 0.6 : 0.35);
+  for (const [id, obj] of Object.entries(options)) obj.visible = etat.accessoires.has(id) && permis(trouver('accessoires', id) ?? {});
+
+  let total = PRIX_DE_BASE;
+  for (const cle of actifs()) total += trouver(cle).prix;
+  for (const cle of CASES) for (const id of etat[cle]) { const c = trouver(cle, id); if (c && permis(c)) total += c.prix ?? 0; }
+  const surDevis = CASES.some(cle => [...etat[cle]].some(id => trouver(cle, id)?.prix === null));
+  document.getElementById('total').innerHTML = euros(total) +
+    (surDevis ? '<small style="display:block;font:500 12px Manrope,sans-serif;color:var(--doux);text-align:right">' + t('+ options sur devis') + '</small>' : '');
+  etat.total = total;
+
+  const p = new URLSearchParams();
+  for (const cle of CHOIX_UNIQUES) p.set(cle, etat[cle]);
+  for (const cle of CASES) p.set(cle, [...etat[cle]].join(','));
+  history.replaceState(null, '', '#' + p.toString());
+}
+const euros = n => n.toLocaleString(LOCALES[langue], { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const prixTxt = n => n == null ? t('Sur devis') : n ? '+ ' + euros(n) : t('Inclus');
+
+// ─────────────────────────────────────────────────────────────
+// INTERFACE
+// ─────────────────────────────────────────────────────────────
+function construirePanneau() {
+  const zone = document.getElementById('options');
+  zone.innerHTML = '';
+  for (const [cle, g] of Object.entries(CATALOGUE)) {
+    if (g.si && !g.si(etat)) continue;
+    const liste_dispo = choixDispo(cle);
+    if (liste_dispo.length === 0 || (cle in PREFIXES_VARIANTES && liste_dispo.length < 2)) continue;
+    const bloc = document.createElement('section');
+    bloc.className = 'groupe';
+    const sel = g.type === 'cases' ? '' : t(trouver(cle).nom);
+    bloc.innerHTML = `<h2>${t(g.titre)}<span>${g.type === 'couleur' ? sel + ' · ' + prixTxt(trouver(cle).prix) : ''}</span></h2>`;
+    const liste = document.createElement('div');
+    if (g.type === 'couleur') {
+      liste.className = 'pastilles' + (g.petit ? ' petites' : '');
+      for (const c of g.choix) {
+        const b = document.createElement('button');
+        b.className = 'pastille' + (etat[cle] === c.id ? ' actif' : '');
+        const hex = c.hex ?? trouver(cle === 'fil' || cle === 'cuir_cotes' ? 'cuir' : 'carrosserie').hex;
+        b.style.background = c.metal ? `linear-gradient(135deg, #fff, #8a8a8a 45%, #eee 60%, #777)` : hex;
+        if (c.id === 'assorti') b.style.background = `linear-gradient(135deg, ${hex} 50%, #ecebe6 50%)`;
+        b.title = `${t(c.nom)} — ${prixTxt(c.prix)}`;
+        b.onclick = () => { etat[cle] = c.id; appliquer(); construirePanneau(); };
+        liste.appendChild(b);
+      }
+    } else {
+      liste.className = 'liste';
+      for (const c of liste_dispo) {
+        const actif = g.type === 'cases' ? etat[cle].has(c.id) : etat[cle] === c.id;
+        const b = document.createElement('button');
+        b.className = 'choix' + (actif ? ' actif' : '');
+        b.innerHTML = g.type === 'cases'
+          ? `<span class="gauche"><span class="case">${actif ? '✓' : ''}</span>${t(c.nom)}</span><span class="prix">${prixTxt(c.prix)}</span>`
+          : `<span>${t(c.nom)}</span><span class="prix">${prixTxt(c.prix)}</span>`;
+        b.onclick = () => {
+          if (g.type === 'cases') etat[cle].has(c.id) ? etat[cle].delete(c.id) : etat[cle].add(c.id);
+          else etat[cle] = c.id;
+          appliquer(); construirePanneau();
+        };
+        liste.appendChild(b);
+      }
+    }
+    bloc.appendChild(liste);
+    zone.appendChild(bloc);
+    if (cle === 'cuir_style') zone.appendChild(galerie());
+  }
+}
+// Photos d'intérieurs réalisés (fournies par le propriétaire) : vignettes + agrandissement
+const PHOTOS = [
+  { src: 'photos/interieur-3.jpg', legende: 'Cuir caramel, losange et surpiqûres crème' },
+  { src: 'photos/interieur-1.jpg', legende: 'Sièges individuels et console centrale' },
+  { src: 'photos/interieur-4.jpg', legende: 'Cuir cognac vintage, losange' },
+  { src: 'photos/interieur-2.jpg', legende: 'Banquettes arrière en cuir cognac' },
+];
+function galerie() {
+  const bloc = document.createElement('section');
+  bloc.className = 'groupe';
+  bloc.innerHTML = `<h2>${t('Nos réalisations')}<span>${t('Photos réelles')}</span></h2>`;
+  const grille = document.createElement('div'); grille.className = 'galerie';
+  for (const p of PHOTOS) {
+    const b = document.createElement('button');
+    b.innerHTML = `<img src="${p.src}" alt="${t(p.legende)}" loading="lazy">`;
+    b.onclick = () => { document.getElementById('photo-grande').src = p.src;
+      document.getElementById('photo-legende').textContent = t(p.legende);
+      document.getElementById('visionneuse').classList.add('ouverte'); };
+    grille.appendChild(b);
+  }
+  bloc.appendChild(grille);
+  return bloc;
+}
+construirePanneau();
+document.getElementById('visionneuse').onclick = () => document.getElementById('visionneuse').classList.remove('ouverte');
+
+// Ambiances
+const zoneAmb = document.getElementById('ambiances');
+function choisirAmbiance(id) {
+  const a = AMBIANCES[id];
+  conteneur.style.background = a.fond;
+  soleil.color.set(a.soleil); soleil.intensity = a.force;
+  scene.environmentIntensity = a.env;
+  ombreSol.material.opacity = a.ombre;
+  [...zoneAmb.children].forEach(b => b.classList.toggle('actif', b.dataset.id === id));
+}
+for (const [id, a] of Object.entries(AMBIANCES)) {
+  const b = document.createElement('button'); b.textContent = t(a.nom); b.dataset.id = id; b.dataset.t = a.nom;
+  b.onclick = () => choisirAmbiance(id); zoneAmb.appendChild(b);
+}
+choisirAmbiance('studio');
+
+// Vues caméra
+let animCamera = null;
+const zoneVues = document.getElementById('vues');
+for (const [id, v] of Object.entries(VUES)) {
+  const b = document.createElement('button'); b.textContent = t(v.nom); b.dataset.t = v.nom;
+  b.onclick = () => {
+    controles.autoRotate = false;
+    const vers = new THREE.Vector3(...v.pos);
+    let cible = new THREE.Vector3(...(v.cible ?? CIBLE_EXT));
+    // à l'intérieur, la cible est juste devant les yeux : tourner la souris = tourner la tête
+    if (v.interieur) cible = vers.clone().add(cible.sub(vers).normalize().multiplyScalar(0.25));
+    controles.minDistance = 0.05; controles.maxDistance = 12; controles.maxPolarAngle = Math.PI * 0.9;
+    animCamera = { de: camera.position.clone(), vers, cibleDe: controles.target.clone(), cibleVers: cible, t: 0, interieur: !!v.interieur };
+    [...zoneVues.children].forEach(x => x.classList.toggle('actif', x === b));
+  };
+  zoneVues.appendChild(b);
+}
+const bRot = document.createElement('button'); bRot.textContent = t('⟳ Rotation'); bRot.dataset.t = '⟳ Rotation';
+bRot.onclick = () => { controles.autoRotate = !controles.autoRotate; animCamera = null; };
+const bPlein = document.createElement('button'); bPlein.textContent = t('⤢ Plein écran'); bPlein.dataset.t = '⤢ Plein écran';
+bPlein.onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+zoneVues.append(bRot, bPlein);
+
+// Devis et partage
+const toast = t => { const e = document.getElementById('toast'); e.textContent = t; e.classList.add('visible'); setTimeout(() => e.classList.remove('visible'), 2200); };
+function lignes() {
+  const l = [[t('Prix de base'), euros(PRIX_DE_BASE)]];
+  for (const cle of actifs()) {
+    const c = trouver(cle); l.push([t(CATALOGUE[cle].titre) + (langue === 'fr' ? ' : ' : ': ') + t(c.nom), prixTxt(c.prix)]);
+  }
+  for (const cle of CASES) for (const id of etat[cle]) { const c = trouver(cle, id); if (c && permis(c)) l.push([t(c.nom), prixTxt(c.prix)]); }
+  l.push([t('Total'), euros(etat.total)]);
+  return l;
+}
+document.getElementById('devis').onclick = () => {
+  document.getElementById('recap').innerHTML = lignes().map(([a, b]) => `<li><span>${a}</span><span>${b}</span></li>`).join('');
+  document.getElementById('fenetre').classList.add('ouverte');
+};
+document.getElementById('fermer').onclick = () => document.getElementById('fenetre').classList.remove('ouverte');
+document.getElementById('envoyer').onclick = () => {
+  document.getElementById('fenetre').classList.remove('ouverte');
+  if (!LIEN_SITE) { toast(t('Demande prête — l’envoi sera branché sur le site')); return; }
+  // Intégré au site : on ouvre le formulaire de contact du site, prérempli avec la configuration
+  const texte = lignes().map(([a, b]) => `${a} — ${b}`).join('\n');
+  try { localStorage.setItem('devis_configuration', texte); } catch {}
+  allerAuSite('contact', texte);
+};
+// Retour vers le site. Si le site a ouvert le configurateur par-dessus sa propre page
+// (version en ligne), c'est lui qui reprend la main ; sinon on change de page.
+function allerAuSite(ancre, devis) {
+  try { if (window.parent !== window && parent.retourDuConfigurateur) return parent.retourDuConfigurateur(ancre, devis, langue); } catch {}
+  location.href = `${LIEN_SITE}?lang=${langue}` + (devis ? `&devis=${encodeURIComponent(devis)}` : '') + `#${ancre}`;
+}
+document.getElementById('retour').onclick = e => { e.preventDefault(); allerAuSite('configurateur'); };
+document.getElementById('partager').onclick = async () => {
+  try { await navigator.clipboard.writeText(location.href); toast(t('Lien de la configuration copié')); }
+  catch { toast(t('Copiez l’adresse de la page pour partager')); }
+};
+
+// ─────────────────────────────────────────────────────────────
+// LANGUE : sélecteur FR / EN / ES et mise à jour de tous les textes
+// ─────────────────────────────────────────────────────────────
+const zoneLangues = document.getElementById('langues');
+for (const l of LANGUES) {
+  const b = document.createElement('button'); b.textContent = l.toUpperCase(); b.dataset.l = l;
+  b.onclick = () => { langue = l; try { localStorage.setItem('langue', l); } catch {} appliquerLangue(); };
+  zoneLangues.appendChild(b);
+}
+if (LIEN_SITE) document.getElementById('retour').hidden = false;
+function appliquerLangue() {
+  document.documentElement.lang = langue;
+  for (const e of document.querySelectorAll('[data-t]')) {
+    if (!e.dataset.t) e.dataset.t = e.textContent;
+    e.textContent = t(e.dataset.t);
+  }
+  const partager = document.getElementById('partager');
+  partager.dataset.titre ??= partager.title;
+  partager.title = t(partager.dataset.titre);
+  if (LIEN_SITE) document.getElementById('retour').href = `${LIEN_SITE}?lang=${langue}#configurateur`;
+  [...zoneLangues.children].forEach(b => b.classList.toggle('actif', b.dataset.l === langue));
+  document.getElementById('source').textContent = t(sourceTexte);
+  construirePanneau(); appliquer();
+}
+appliquerLangue();
+
+// ─────────────────────────────────────────────────────────────
+// BOUCLE D'AFFICHAGE
+// ─────────────────────────────────────────────────────────────
+function taille() {
+  const w = conteneur.clientWidth, h = conteneur.clientHeight;
+  rendu.setSize(w, h, false); camera.aspect = w / h;
+  // élargit le champ de vision quand la zone est étroite, pour garder tout le véhicule
+  camera.fov = THREE.MathUtils.clamp(30 * 1.5 / (w / h), 30, 55);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', taille); taille();
+
+
+// Outil de diagnostic, actif seulement avec ?debug dans l'adresse
+if (location.search.includes('debug')) window.__debug = { camera, controles, scene, materiaux, THREE, rendu, AMBIANCES, soleil };
+const horloge = new THREE.Clock();
+rendu.setAnimationLoop(() => {
+  const dt = Math.min(horloge.getDelta(), 0.05);
+  for (const [nom, col] of Object.entries(cibles)) materiaux[nom].color.lerp(col, 1 - Math.pow(0.002, dt));
+  if (animCamera) {
+    animCamera.t = Math.min(1, animCamera.t + dt / 1.1);
+    const e = 1 - Math.pow(1 - animCamera.t, 3);
+    camera.position.lerpVectors(animCamera.de, animCamera.vers, e);
+    controles.target.lerpVectors(animCamera.cibleDe, animCamera.cibleVers, e);
+    if (animCamera.t >= 1) { limitesCamera(animCamera.interieur); animCamera = null; }
+  }
+  controles.update();
+  rendu.render(scene, camera);
+});
+</script>
+</body>
+</html>
